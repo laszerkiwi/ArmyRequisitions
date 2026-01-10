@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Equipment Requisitions Form</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+            }
+            div {
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            h2 {
+                text-align: center;
+            }
+            form {
+                display: flex;
+                flex-direction: column;
+            }
+            label {
+                margin-top: 10px;
+                font-weight: bold;
+            }
+            input, select, button {
+                margin-top: 5px;
+                padding: 8px;
+                font-size: 16px;
+            }
+            button {
+                margin-top: 20px;
+                padding: 10px;
+                border: none;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div>
+            <h2>Equipment Requisitions Form</h2>
+
+            <div id="error" class="error">Please fill all fields unless specified.</div>
+
+            <form action="" method="post">
+                <label>Regimental Number (e.g. U1064596)</label>
+                <input type="text" id="reg_number" name="reg_number" required>
+
+                <label>Rank (e.g. PTE)</label>
+                <input type="text" id="rank" name="rank" required>
+
+                <label>First Name</label>
+                <input type="text" id="first_name" name="first_name" required>
+
+                <label>Last Name</label>
+                <input type="text" id="last_name" name="last_name" required>
+
+                <label>Unit (e.g. 2 Platoon, Auckland Company, 3/6 Battalion RNZIR)</label>
+                <input type="text" id="unit" name="unit" required>
+
+                <label>Weapon issuing</label>
+                <select id="weapon" name="weapon" required>
+                    <option value="">Select...</option>
+                    <option value="Modular Assault Rifle System-Light">MARS-L</option>
+                    <option value="Light Support Weapon">Light Support Weapon</option>
+                    <option value="Glock 17 Gen 4">Glock 17 Gen 4</option>
+                </select>
+
+                <label>Weapon Serial Number</label>
+                <input type="text" id="weapon_serial" name="weapon_serial" required>
+
+                <label>Submit</label>
+                <button type="submit" id="submit">Submit</button>
+            </form>
+        </div>
+    </body>
+</html>
