@@ -31,16 +31,16 @@ def lambda_handler(event, context):
     if result:
         # Insert into DB
         cursor.execute(
-            'INSERT INTO soldier () VALUES (%s, %s, %s, %s)',
-            ()
+            'INSERT INTO soldier (reg_number, rank, first_name, last_name, unit) VALUES (%s, %s, %s, %s, %s)',
+            (reg_number, rank, first_name, last_name, unit)
         )
         cursor.execute(
-            'INSERT INTO log (track_name, distance, abrasiveness, evolution) VALUES (%s, %s, %s, %s)',
-            (track_name, lap_distance, abrasiveness, evolution)
+            'INSERT INTO log (reg_number, weapon_serial) VALUES (%s, %s)',
+            (reg_number, weapon_serial)
         )
         cursor.execute(
-            'INSERT INTO equipment (final_wear) VALUES (%s)',
-            (final_wear,)
+            'INSERT INTO equipment (weapon_serial) VALUES (%s)',
+            (weapon_serial,)
         )
 
         conn.commit()
