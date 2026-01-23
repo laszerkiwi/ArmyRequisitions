@@ -51,11 +51,10 @@ def lambda_handler(event, context):
 
     # Prepare results
     results = {
-        "message": message,
-        "final_wear": final_wear,
-        "track_name": track_name,
-        "car_name": car_name,
-        "tyre_name": tyre_name
+        "reg_number": reg_number,
+        "rank": rank,
+        "last_name": last_name,
+        "weapon_serial": weapon_serial,
     }
 
     # Encode results into query string
