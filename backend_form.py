@@ -1,71 +1,65 @@
+from flask import Flask, request, redirect
 import pymysql
 import json
 import urllib.parse
 
-def lambda_handler(event, context):
-    # Connect to the MySQL database
+app = Flask(__name__)
+
+@app.route("/submit", methods=["POST"])
+def submit():
+    # Connect to local MySQL
     conn = pymysql.connect(
-        host='',
-        user='admin',
-        password='Snapegaming193',
-        db='tyre_wear_db'
+        host="localhost",
+        user="admin",
+        password="Snapegaming193",
+        db="tyre_wear_db"
     )
     cursor = conn.cursor()
 
-    # Parse form data from body (x-www-form-urlencoded)
-    body = event.get('body', '')
-    form_data = dict(x.split('=') for x in body.split('&'))
+    # Read form data safely
+    reg_number = request.form.get("reg_number", "")
+    rank = request.form.get("rank", "")
+    first_name = request.form.get("first_name", "")
+    last_name = request.form.get("last_name", "")
+    unit = request.form.get("unit", "")
+    weapon_serial = request.form.get("weapon_serial", "")
 
-    # Extract fields
-    reg_number = form_data.get('reg_number', '0')
-    rank = form_data.get('rank', '0')
-    first_name = form_data.get('first_name', '0')
-    last_name = form_data.get('last_name', '0')
-    unit = form_data.get('unit', '0')
-    weapon_serial = form_data.get('weapon_serial', '0')
+    # INSERT DATA
+    cursor.execute(
+        """
+        INSERT INTO soldier (reg_number, rank, first_name, last_name, unit)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+        (reg_number, rank, first_name, last_name, unit)
+    )
 
-    # Query tyre data
-    cursor.execute('SELECT base_wear FROM tyre WHERE tyre_name = %s', (tyre_name,))
-    result = cursor.fetchone()
+    cursor.execute(
+        "INSERT INTO equipment (weapon_serial) VALUES (%s)",
+        (weapon_serial,)
+    )
 
-    if result:
-        # Insert into DB
-        cursor.execute(
-            'INSERT INTO soldier (reg_number, rank, first_name, last_name, unit) VALUES (%s, %s, %s, %s, %s)',
-            (reg_number, rank, first_name, last_name, unit)
-        )
-        cursor.execute(
-            'INSERT INTO log (reg_number, weapon_serial) VALUES (%s, %s)',
-            (reg_number, weapon_serial)
-        )
-        cursor.execute(
-            'INSERT INTO equipment (weapon_serial) VALUES (%s)',
-            (weapon_serial,)
-        )
+    cursor.execute(
+        "INSERT INTO log (reg_number, weapon_serial) VALUES (%s, %s)",
+        (reg_number, weapon_serial)
+    )
 
-        conn.commit()
-
-    # Close DB connection
+    conn.commit()
     cursor.close()
     conn.close()
 
     # Prepare results
     results = {
+        "message": "Record successfully added",
         "reg_number": reg_number,
         "rank": rank,
         "last_name": last_name,
-        "weapon_serial": weapon_serial,
+        "weapon_serial": weapon_serial
     }
 
-    # Encode results into query string
     encoded_data = urllib.parse.quote(json.dumps(results))
 
-    # Redirect user to results page
-    return {
-        "statusCode": 302,
-        "headers": {
-            "Location": f"https://tyre-wear-calculator.s3-website-ap-southeast-2.amazonaws.com/results.html?data={encoded_data}",
-            "Access-Control-Allow-Origin": "*"
-        },
-        "body": ""
-    }
+    # Redirect to local HTML file
+    return redirect(f"/results.html?data={encoded_data}", code=302)
+
+if __name__ == "__main__":
+    app.run(debug=True)
