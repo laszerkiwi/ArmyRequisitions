@@ -42,7 +42,10 @@
 
             <div id="error" class="error">Please fill all fields unless specified.</div>
 
-            <form action="" method="post">
+            <!-- ──────────────────────────────────────── -->
+            <!--  Changed: action was "" → now "/submit"  -->
+            <!-- ──────────────────────────────────────── -->
+            <form action="/submit" method="post">
                 <label>Regimental Number (e.g. U1064596)</label>
                 <input type="text" id="reg_number" name="reg_number" required>
 
