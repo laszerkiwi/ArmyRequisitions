@@ -1,5 +1,6 @@
 from flask import Flask, request, redirect
 import pymysql
+from datetime import datetime
 import json
 import urllib.parse
 
@@ -7,59 +8,82 @@ app = Flask(__name__)
 
 @app.route("/submit", methods=["POST"])
 def submit():
-    # Connect to local MySQL
     conn = pymysql.connect(
         host="localhost",
         user="admin",
         password="Snapegaming193",
-        db="tyre_wear_db"
+        database="army_requisitons",
+        cursorclass=pymysql.cursors.DictCursor
     )
-    cursor = conn.cursor()
+    cur = conn.cursor()
 
-    # Read form data safely
-    reg_number = request.form.get("reg_number", "")
-    rank = request.form.get("rank", "")
-    first_name = request.form.get("first_name", "")
-    last_name = request.form.get("last_name", "")
-    unit = request.form.get("unit", "")
-    weapon_serial = request.form.get("weapon_serial", "")
+    try:
+        reg = request.form.get("reg_number", "").strip()
+        serial = request.form.get("weapon_serial", "").strip()
 
-    # INSERT DATA
-    cursor.execute(
-        """
-        INSERT INTO soldier (reg_number, rank, first_name, last_name, unit)
-        VALUES (%s, %s, %s, %s, %s)
-        """,
-        (reg_number, rank, first_name, last_name, unit)
-    )
+        if not reg or not serial:
+            raise ValueError("Both regimental number and weapon serial required")
 
-    cursor.execute(
-        "INSERT INTO equipment (weapon_serial) VALUES (%s)",
-        (weapon_serial,)
-    )
+        # 1. Check soldier exists
+        cur.execute("SELECT rank, last_name FROM Soldier WHERE reg_number = %s", (reg,))
+        soldier = cur.fetchone()
+        if not soldier:
+            raise ValueError(f"Soldier {reg} not found")
 
-    cursor.execute(
-        "INSERT INTO log (reg_number, weapon_serial) VALUES (%s, %s)",
-        (reg_number, weapon_serial)
-    )
+        rank = soldier['rank']
+        lastname = soldier['last_name']
 
-    conn.commit()
-    cursor.close()
-    conn.close()
+        # 2. Check weapon exists + status
+        cur.execute(
+            "SELECT weapon_type, Availability FROM Equipment WHERE weapon_serial = %s",
+            (serial,)
+        )
+        weapon = cur.fetchone()
+        if not weapon:
+            raise ValueError(f"Weapon {serial} not found")
 
-    # Prepare results
-    results = {
-        "message": "Record successfully added",
-        "reg_number": reg_number,
-        "rank": rank,
-        "last_name": last_name,
-        "weapon_serial": weapon_serial
-    }
+        if weapon['Availability'] != 'Available':
+            raise ValueError(f"Weapon {serial} is {weapon['Availability']}")
 
-    encoded_data = urllib.parse.quote(json.dumps(results))
+        # 3. Record issue + update status
+        now = datetime.now()
+        cur.execute(
+            "INSERT INTO Log (reg_number, weapon_serial, issue_date) VALUES (%s, %s, %s)",
+            (reg, serial, now)
+        )
+        cur.execute(
+            "UPDATE Equipment SET Availability = 'In Use' WHERE weapon_serial = %s",
+            (serial,)
+        )
 
-    # Redirect to local HTML file
-    return redirect(f"/results.html?data={encoded_data}", code=302)
+        conn.commit()
+
+        wtype = weapon['weapon_type'] or "Weapon"
+        message = f"{wtype} {serial} issued to {reg} {rank} {lastname}"
+
+        # ───────────────────────────────────────────────────────────────
+        #  Changed: send the actual data so results.html can display it
+        # ───────────────────────────────────────────────────────────────
+        result = {
+            "message": message,
+            "success": True,
+            "reg_number": reg,
+            "rank": rank,
+            "last_name": lastname,
+            "weapon_serial": serial
+        }
+
+    except Exception as e:
+        conn.rollback()
+        result = {"message": str(e), "success": False}
+
+    finally:
+        cur.close()
+        conn.close()
+
+    # Redirect to results
+    data = urllib.parse.quote(json.dumps(result))
+    return redirect(f"/results.html?data={data}")
 
 if __name__ == "__main__":
     app.run(debug=True)
