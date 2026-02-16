@@ -61,9 +61,6 @@ def submit():
         wtype = weapon['weapon_type'] or "Weapon"
         message = f"{wtype} {serial} issued to {reg} {rank} {lastname}"
 
-        # ───────────────────────────────────────────────────────────────
-        #  Changed: send the actual data so results.html can display it
-        # ───────────────────────────────────────────────────────────────
         result = {
             "message": message,
             "success": True,
