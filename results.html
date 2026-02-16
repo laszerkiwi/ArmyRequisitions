@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Weapon Requisition Confirmation</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        div { max-width: 600px; margin: 0 auto; padding: 20px; }
+        h1 { text-align: center; }
+        p { font-size: 16px; margin: 8px 0; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div>
+    <h1>Results</h1>
+    <div id="results"></div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const data = params.get("data");
+
+    if (data) {
+        try {
+            const result = JSON.parse(decodeURIComponent(data));
+            let html = `
+                <p><strong>Message:</strong> ${result.message}</p>
+                <p><strong>Regimental Number:</strong> ${result.reg_number}</p>
+                <p><strong>Rank:</strong> ${result.rank}</p>
+                <p><strong>Last Name:</strong> ${result.last_name}</p>
+                <p><strong>Weapon Serial:</strong> ${result.weapon_serial}</p>
+            `;
+            document.getElementById("results").innerHTML = html;
+        } catch {
+            document.getElementById("results").innerHTML =
+                "<p class='error'>Error parsing results.</p>";
+        }
+    } else {
+        document.getElementById("results").innerHTML =
+            "<p class='error'>No results provided.</p>";
+    }
+</script>
+</body>
+</html>
