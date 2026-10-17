@@ -1,44 +1,207 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Weapon Requisition Confirmation</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Equipment Requisition Result</title>
     <style>
-        body { font-family: Arial, sans-serif; }
-        div { max-width: 600px; margin: 0 auto; padding: 20px; }
-        h1 { text-align: center; }
-        p { font-size: 16px; margin: 8px 0; }
-        .error { color: red; font-weight: bold; }
+        :root {
+            --bg: #f3f6fb;
+            --panel: #ffffff;
+            --text: #1c2530;
+            --muted: #5d6b7a;
+            --primary: #1d4ed8;
+            --primary-dark: #163ea8;
+            --success-bg: #e8f7ee;
+            --success-text: #1c7c4f;
+            --error-bg: #fdecec;
+            --error-text: #b42318;
+            --border: #dfe6ee;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .card {
+            width: min(100%, 700px);
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            padding: 28px 30px;
+        }
+
+        h1 {
+            margin: 0 0 18px;
+            text-align: center;
+            font-size: 2rem;
+        }
+
+        .status {
+            display: block;
+            margin: 0 auto 22px;
+            max-width: 280px;
+            text-align: center;
+            padding: 10px 14px;
+            border-radius: 999px;
+            font-weight: bold;
+            letter-spacing: 0.02em;
+        }
+
+        .status.success {
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
+
+        .status.error {
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px 18px;
+            margin-top: 18px;
+        }
+
+        .field {
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: #f9fbff;
+        }
+
+        .label {
+            display: block;
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .value {
+            font-size: 1rem;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .actions {
+            margin-top: 24px;
+            text-align: center;
+        }
+
+        .button {
+            display: inline-block;
+            text-decoration: none;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .button:hover {
+            background: var(--primary-dark);
+        }
+
+        .error-message {
+            color: var(--error-text);
+            background: var(--error-bg);
+            border: 1px solid #f7c9c5;
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 18px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
-<div>
-    <h1>Results</h1>
-    <div id="results"></div>
-</div>
+    <div class="card">
+        <h1>Requisition Result</h1>
+        <div id="status" class="status">Loading...</div>
+        <div id="results"></div>
+        <div class="actions">
+            <a href="/" class="button">Back to Form</a>
+        </div>
+    </div>
 
-<script>
-    const params = new URLSearchParams(window.location.search);
-    const data = params.get("data");
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const encoded = params.get('data');
 
-    if (data) {
-        try {
-            const result = JSON.parse(decodeURIComponent(data));
-            let html = `
-                <p><strong>Message:</strong> ${result.message}</p>
-                <p><strong>Regimental Number:</strong> ${result.reg_number}</p>
-                <p><strong>Rank:</strong> ${result.rank}</p>
-                <p><strong>Last Name:</strong> ${result.last_name}</p>
-                <p><strong>Weapon Serial:</strong> ${result.weapon_serial}</p>
-            `;
-            document.getElementById("results").innerHTML = html;
-        } catch {
-            document.getElementById("results").innerHTML =
-                "<p class='error'>Error parsing results.</p>";
+        function showError(message) {
+            const status = document.getElementById('status');
+            const results = document.getElementById('results');
+            status.textContent = 'Error';
+            status.className = 'status error';
+            results.innerHTML = '<div class="error-message">' + message + '</div>';
         }
-    } else {
-        document.getElementById("results").innerHTML =
-            "<p class='error'>No results provided.</p>";
-    }
-</script>
+
+        if (!encoded) {
+            showError('No result data was provided.');
+        } else {
+            try {
+                const data = JSON.parse(decodeURIComponent(encoded));
+
+                if (!data || typeof data !== 'object') {
+                    throw new Error('Invalid result payload.');
+                }
+
+                const status = document.getElementById('status');
+                const results = document.getElementById('results');
+
+                if (data.success) {
+                    status.textContent = 'Issued Successfully';
+                    status.className = 'status success';
+                } else {
+                    status.textContent = 'Issue Failed';
+                    status.className = 'status error';
+                }
+
+                const fields = [
+                    ['Message', data.message || 'No message provided'],
+                    ['Regimental Number', data.reg_number || 'N/A'],
+                    ['Rank', data.rank || 'N/A'],
+                    ['Last Name', data.last_name || 'N/A'],
+                    ['Weapon Serial', data.weapon_serial || 'N/A']
+                ];
+
+                const html = fields.map(([label, value]) => `
+                    <div class="field">
+                        <span class="label">${label}</span>
+                        <div class="value">${value}</div>
+                    </div>
+                `).join('');
+
+                results.innerHTML = '<div class="result-grid">' + html + '</div>';
+
+            } catch (error) {
+                showError('The result data could not be parsed.');
+            }
+        }
+    </script>
 </body>
 </html>
